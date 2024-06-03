@@ -1,0 +1,62 @@
+version: '3.8' 
+ 
+services: 
+  app1: 
+    build: 
+      context: ./my-laravel-app 
+      dockerfile: Dockerfile 
+    image: laravel-app 
+    container_name: tasks 
+    working_dir: /var/www/app1
+    volumes: 
+      - ./my-laravel-app:/var/www/app1
+    networks: 
+      - laravel 
+ 
+  app2: 
+    build: 
+      context: ./team_members 
+      dockerfile: Dockerfile 
+    image: laravel-app2
+    container_name: team_members 
+    working_dir: /var/www/app2
+    volumes: 
+      - ./team_members:/var/www/app2
+    networks: 
+      - laravel 
+
+  nginx: 
+    image: nginx:latest 
+    container_name: nginx 
+    ports: 
+      - "8081:80"  # Порт 8081 пробрасывается на порт 80 контейнера nginx для app2 приложения
+      - "8090:90"  # Порт 8090 пробрасывается на порт 90 контейнера nginx для app1 приложения
+    volumes: 
+      - ./my-laravel-app:/var/www/app1
+      - ./team_members:/var/www/app2
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf 
+    networks: 
+      - laravel 
+    depends_on: 
+      - app1
+      - app2
+ 
+  postgres: 
+    image: postgres:13 
+    container_name: postgres 
+    environment: 
+      POSTGRES_DB: tasks 
+      POSTGRES_USER: postgres 
+      POSTGRES_PASSWORD: qwerty22 
+    volumes: 
+      - pgdata:/var/lib/postgresql/data 
+    networks: 
+      - laravel 
+ 
+networks: 
+  laravel: 
+    driver: bridge 
+ 
+volumes: 
+  pgdata: 
+    driver: local
